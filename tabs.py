@@ -1065,9 +1065,9 @@ def mirny_tab_build(self):
         self.mirny_dummy_header.item(0,6*i+4).setTextAlignment(Qt.AlignCenter)
         #headers Channel attributes (f, Amp, att, phase, state)
         self.mirny_dummy_header.setItem(1,6*i+4, QTableWidgetItem('f (MHz)'))
-        self.mirny_dummy_header.setItem(1,6*i+5, QTableWidgetItem('Amp (dBm)'))
+        # self.mirny_dummy_header.setItem(1,6*i+5, QTableWidgetItem('Amp (dBm)'))
         self.mirny_dummy_header.setItem(1,6*i+6, QTableWidgetItem('Att (dBm)'))
-        self.mirny_dummy_header.setItem(1,6*i+7, QTableWidgetItem('phase (deg)'))
+        # self.mirny_dummy_header.setItem(1,6*i+7, QTableWidgetItem('phase (deg)'))
         self.mirny_dummy_header.setItem(1,6*i+8, QTableWidgetItem('state'))
 
     self.mirny_dummy_header.itemChanged.connect(self.mirny_dummy_header_changed)
