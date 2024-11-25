@@ -388,35 +388,35 @@ class MainWindow(QMainWindow):
         
         self.init_default_values() #Reads the default state file and initializes the values
         tabs.sequence_tab_build(self)
-        if config.digital_channels_number > 0:
+        if config.digital_channels_number >= 0:
             tabs.digital_tab_build(self)
-        if config.analog_channels_number > 0:
+        if config.analog_channels_number >= 0:
             tabs.analog_tab_build(self)
-        if config.dds_channels_number > 0:
+        if config.dds_channels_number >= 0:
             tabs.dds_tab_build(self)
-        if config.sampler_channels_number > 0:
+        if config.sampler_channels_number >= 0:
             tabs.sampler_tab_build(self)
-        if config.mirny_channels_number > 0:
+        if config.mirny_channels_number >= 0:
             tabs.mirny_tab_build(self)
-        if config.slow_dds_channels_number > 0:
+        if config.slow_dds_channels_number >= 0:
             tabs.slow_dds_tab_build(self)
         tabs.variables_tab_build(self)
         self.making_separator()
        
         #ADDING TABS TO MAIN WINDOW
         self.main_window.addTab(self.sequence_tab_widget, "Sequence")
-        if config.digital_channels_number > 0:
+        if config.digital_channels_number >= 0:
             self.main_window.addTab(self.digital_tab_widget, "Digital")
-        if config.analog_channels_number > 0:
+        if config.analog_channels_number >= 0:
            self.main_window.addTab(self.analog_tab_widget, "Analog")
-        if config.dds_channels_number > 0:
+        if config.dds_channels_number >= 0:
             self.main_window.addTab(self.dds_tab_widget, "DDS")
-        if config.mirny_channels_number > 0:
+        if config.mirny_channels_number >= 0:
             self.main_window.addTab(self.mirny_tab_widget, "Mirny")
-        if config.sampler_channels_number > 0:
+        if config.sampler_channels_number >= 0:
             self.main_window.addTab(self.sampler_tab_widget, "Sampler")
         self.main_window.addTab(self.variables_tab_widget, "Variables")
-        if config.slow_dds_channels_number > 0:
+        if config.slow_dds_channels_number >= 0:
             self.main_window.addTab(self.slow_dds_tab_widget, "Slow DDS")
         self.to_update = True
         
@@ -453,17 +453,17 @@ class MainWindow(QMainWindow):
             self.experiment.title_slow_dds_tab = deepcopy(default_experiment.title_slow_dds_tab)
         except:
             self.experiment.sequence[0] = self.Edge(name="Default")
-            if config.digital_channels_number > 0:
+            if config.digital_channels_number >= 0:
                 self.experiment.title_digital_tab = ["#", "Name", "Time (ms)", ""] + [f"D{i}" for i in range(config.digital_channels_number)]
-            if config.analog_channels_number > 0:
+            if config.analog_channels_number >= 0:
                 self.experiment.title_analog_tab = ["#", "Name", "Time (ms)", ""] + [f"A{i}" for i in range(config.analog_channels_number)]
-            if config.dds_channels_number > 0:
+            if config.dds_channels_number >= 0:
                 self.experiment.title_dds_tab = ["#", "Name", "Time (ms)", ""] + [f"DDS{i}" for i in range(config.dds_channels_number)]            
-            if config.mirny_channels_number > 0:
+            if config.mirny_channels_number >= 0:
                 self.experiment.title_mirny_tab = ["#", "Name", "Time (ms)", ""] + [f"M{i}" for i in range(config.mirny_channels_number)]            
-            if config.sampler_channels_number > 0:
+            if config.sampler_channels_number >= 0:
                 self.experiment.title_sampler_tab = ["#", "Name", "Time (ms)", ""] + [f"S{i}" for i in range(config.sampler_channels_number)]            
-            if config.dds_channels_number > 0:
+            if config.dds_channels_number >= 0:
                 self.experiment.title_slow_dds_tab = ["#", "Name", "Time (ms)", ""] + [f"slow DDS{i}" for i in range(config.dds_channels_number)]            
             if incompatible:
                 self.error_message('Default file is incompatible. Initializing the DEFAULT default values and updating the default file.', 'Error')
@@ -490,23 +490,23 @@ class MainWindow(QMainWindow):
         '''
         #making the separation rows a single column
         if self.sequence_num_rows > 1: # to avoid having a warning that single cell span won't be added
-            if config.dds_channels_number > 0:
+            if config.dds_channels_number >= 0:
                 self.digital_table.setSpan(0,3, self.sequence_num_rows, 1)
-            if config.analog_channels_number > 0:
+            if config.analog_channels_number >= 0:
                 self.analog_table.setSpan(0,3, self.sequence_num_rows, 1)
-            if config.sampler_channels_number > 0:
+            if config.sampler_channels_number >= 0:
                 self.sampler_table.setSpan(0,3, self.sequence_num_rows, 1)
  
         # grey coloured separating line digital tab
-        if config.digital_channels_number > 0:
+        if config.digital_channels_number >= 0:
             self.digital_table.setItem(0,3, QTableWidgetItem())
             self.digital_table.item(0,3).setBackground(self.grey)
         # grey coloured separating line analog tab
-        if config.analog_channels_number > 0:
+        if config.analog_channels_number >= 0:
             self.analog_table.setItem(0,3, QTableWidgetItem())
             self.analog_table.item(0,3).setBackground(self.grey)
         # grey coloured separating line dds tab
-        if config.dds_channels_number > 0:
+        if config.dds_channels_number >= 0:
             self.dds_dummy.setSpan(0,3, self.sequence_num_rows + 2, 1)  
             self.dds_dummy.setItem(0,3, QTableWidgetItem())
             self.dds_dummy.item(0,3).setBackground(self.grey)
@@ -516,7 +516,7 @@ class MainWindow(QMainWindow):
                 self.dds_table.setItem(0,6*i + 3, QTableWidgetItem())
                 self.dds_table.item(0, 6*i + 3).setBackground(self.grey)
         # grey coloured separating line mirny tab
-        if config.mirny_channels_number > 0:
+        if config.mirny_channels_number >= 0:
             self.mirny_dummy.setSpan(0,3, self.sequence_num_rows + 2, 1)  
             self.mirny_dummy.setItem(0,3, QTableWidgetItem())
             self.mirny_dummy.item(0,3).setBackground(self.grey)
@@ -526,7 +526,7 @@ class MainWindow(QMainWindow):
                 self.mirny_table.setItem(0,6*i + 3, QTableWidgetItem())
                 self.mirny_table.item(0, 6*i + 3).setBackground(self.grey)
         # grey coloured separating line sampler tab
-        if config.sampler_channels_number > 0:
+        if config.sampler_channels_number >= 0:
             self.sampler_table.setItem(0,3, QTableWidgetItem())
             self.sampler_table.item(0,3).setBackground(self.grey)
      
