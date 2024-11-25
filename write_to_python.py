@@ -61,9 +61,16 @@ def create_experiment(self, run_continuous = False):
     file.write(indentation + "def run(self):\n")
     indentation += "    "
     file.write(indentation + "self.core.reset()\n")
+
+    if config.dds_channels_number > 0:
+        urukul_num = int(config.dds_channels_number // 4)
+        # file.write(indentation + "self.urukul%d_cpld.init()\n" %urukul_num)
+        for urukuls in range(urukul_num):
+            file.write(indentation + "self.urukul%d_cpld.get_att_mu()\n" %urukuls)
+
     file.write(indentation + "self.core.break_realtime()\n")
     file.write(indentation + "inputs = [0.0]*8\n")
-    file.write(indentation + "delay(1*s)\n") # this delay is added since our reference clock is 1GHz and self.core.break_realtime moves it forward by 15000 clock cycles
+    # file.write(indentation + "delay(1*s)\n") # this delay is added since our reference clock is 1GHz and self.core.break_realtime moves it forward by 15000 clock cycles
     
     # This is used to trigger the camera 10 times and discard those images
     if config.allow_skipping_images == True and self.experiment.skip_images:
@@ -88,7 +95,7 @@ def create_experiment(self, run_continuous = False):
         indentation += "    "
 
     # 10 ns delay to avoid collision of the last edge assignment of digital channels as there is at most 8 channel changes at a given time stamp
-    file.write(indentation + "delay(10*ns)\n")
+    # file.write(indentation + "delay(10*ns)\n")
     # If scan is needed 
     if self.experiment.do_scan == True and self.experiment.scanned_variables_count > 0:
         #making a scanning loop 
@@ -143,30 +150,33 @@ def create_experiment(self, run_continuous = False):
                 file.write(indentation + "delay(10*ns)\n")
        
         #ANALOG CHANNEL CHANGES
-        if config.analog_channels_number > 0:
-            #Assigning zotino card values
-            if config.analog_card == "zotino":
-                flag_zotino_change_needed = False      
-                for index, channel in enumerate(self.experiment.sequence[edge_index].analog):
-                    if channel.changed == True:
-                        flag_zotino_change_needed = True
-                        file.write(indentation + "self.zotino0.write_dac(%d, %s)\n" %(index,channel.for_python))
-                if flag_zotino_change_needed:
-                    file.write(indentation + "self.zotino0.load()\n")
-                    
-            #Assigning fastino card values
-            elif config.analog_card == "fastino":
-                first_analog_channel = True          
-                number_of_channels_changed = 0          
-                for index, channel in enumerate(self.experiment.sequence[edge_index].analog):
-                    if channel.changed == True:
-                        number_of_channels_changed += 1
-                        if edge_index == 0 or index > 0: #adds a delay only for the default edge and in sace of 
-                            file.write(indentation + "delay(10*ns)\n")    
-                        file.write(indentation + "self.fastino0.set_dac(%d, %s)\n" %(index,channel.for_python))
-                #Moving the time cursor back
-                if number_of_channels_changed > 1:
-                    file.write(indentation + "delay(-%d0*ns)\n" %(number_of_channels_changed-1))
+        try:
+            if config.analog_channels_number > 0:
+                #Assigning zotino card values
+                if config.analog_card == "zotino":
+                    flag_zotino_change_needed = False      
+                    for index, channel in enumerate(self.experiment.sequence[edge_index].analog):
+                        if channel.changed == True:
+                            flag_zotino_change_needed = True
+                            file.write(indentation + "self.zotino0.write_dac(%d, %s)\n" %(index,channel.for_python))
+                    if flag_zotino_change_needed:
+                        file.write(indentation + "self.zotino0.load()\n")
+                        
+                #Assigning fastino card values
+                elif config.analog_card == "fastino":
+                    first_analog_channel = True          
+                    number_of_channels_changed = 0          
+                    for index, channel in enumerate(self.experiment.sequence[edge_index].analog):
+                        if channel.changed == True:
+                            number_of_channels_changed += 1
+                            if edge_index == 0 or index > 0: #adds a delay only for the default edge and in sace of 
+                                file.write(indentation + "delay(10*ns)\n")    
+                            file.write(indentation + "self.fastino0.set_dac(%d, %s)\n" %(index,channel.for_python))
+                    #Moving the time cursor back
+                    if number_of_channels_changed > 1:
+                        file.write(indentation + "delay(-%d0*ns)\n" %(number_of_channels_changed-1))
+        except AttributeError:
+            pass
             
         #DDS CHANNEL CHANGES
         if config.dds_channels_number > 0:
@@ -174,26 +184,60 @@ def create_experiment(self, run_continuous = False):
                 if channel.changed == True:
                     urukul_num = int(index // 4)
                     channel_num = int(index % 4)
-                    file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".set_att((" + str(channel.attenuation.for_python) + ")*dB) \n")    
-                    file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".set(frequency = (" + str(channel.frequency.for_python) + ")*MHz, amplitude = " + str(channel.amplitude.for_python) + ", phase = (" + str(channel.phase.for_python) + ")/360)\n")    
                     if channel.state.value == 1:
                         file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".sw.on() \n")
                     else:
                         file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".sw.off() \n")
+            
+            for index, channel in enumerate(self.experiment.sequence[edge_index].dds):
+                if channel.changed == True:
+                    urukul_num = int(index // 4)
+                    channel_num = int(index % 4)
+                    if channel.attenuation.for_python != 0.0 and channel.state.value == 1:
+                        file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".set_att((" + str(channel.attenuation.for_python) + ")*dB) \n")    
+                    else:
+                        pass
 
+            for index, channel in enumerate(self.experiment.sequence[edge_index].dds):
+                if channel.changed == True:
+                    urukul_num = int(index // 4)
+                    channel_num = int(index % 4)
+                    if channel.frequency.for_python != 0.0 and channel.state.value == 1:
+                        file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".set(frequency = (" + str(channel.frequency.for_python) + ")*MHz, amplitude = " + str(channel.amplitude.for_python) + ", phase = (" + str(channel.phase.for_python) + ")/360)\n")    
+                    else:
+                        pass
         #MIRNY CHANNEL CHANGES
+
+        #### ON-OFF SWITCHING
         if config.mirny_channels_number > 0:
             for index, channel in enumerate(self.experiment.sequence[edge_index].mirny):
                 if channel.changed == True:
                     mirny_num = int(index // 4)
                     channel_num = int(index % 4)
-                    file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".set_att((" + str(channel.attenuation.for_python) + ")*dB) \n")    
-                    file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".set_frequency(%s*MHz)\n"%str(channel.frequency.for_python))    
                     if channel.state.value == 1:
                         file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".sw.on() \n")
                     else:
                         file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".sw.off() \n")
+            
+            #### ATTENUATION CHANGE
+            for index, channel in enumerate(self.experiment.sequence[edge_index].mirny):
+                if channel.changed == True:
+                    mirny_num = int(index // 4)
+                    channel_num = int(index % 4)
+                    if channel.attenuation.for_python != 0.0 and channel.state.value == 1:
+                        file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".set_att((" + str(channel.attenuation.for_python) + ")*dB) \n")    
+                    else:
+                        pass
 
+            #### FREQUENCY CHANGE
+            for index, channel in enumerate(self.experiment.sequence[edge_index].mirny):
+                if channel.changed == True:
+                    mirny_num = int(index // 4)
+                    channel_num = int(index % 4)
+                    if channel.frequency.for_python != 0.0 and channel.state.value == 1:
+                        file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".set_frequency(%s*MHz)\n"%str(channel.frequency.for_python))    
+                    else:
+                        pass
                     
         #SAMPLER CHANNELS
         if config.sampler_channels_number > 0:
@@ -248,22 +292,38 @@ def create_go_to_edge(self, edge_num, to_default = False):
     file.write(indentation + "def run(self):\n")
     indentation += "    "
     file.write(indentation + "self.core.reset()\n")
+
+    # # Initializing the Mirny cpld
+    # if config.mirny_channels_number != 0:
+    #     i = config.mirny_channels_number//4
+    #     for id in range(i):
+    #         file.write(indentation + "self.mirny%s_cpld.init()\n" %id)
+
+    if config.dds_channels_number > 0:
+        urukul_num = int(config.dds_channels_number // 4)
+        # file.write(indentation + "self.urukul%d_cpld.init()\n" %urukul_num)
+        for urukuls in range(urukul_num):
+            file.write(indentation + "self.urukul%d_cpld.get_att_mu()\n" %urukuls)
+
     file.write(indentation + "self.core.break_realtime()\n")
    
     # Initializing the devices 
     if file_name == "init_hardware.py":
         for device in config.list_of_devices_for_initialization:
             file.write(indentation + "self.%s.init()\n"%device)
-   
+
     # DIGITAL CHANNEL CHANGES
     if config.digital_channels_number > 0:
+        
         for index, channel in enumerate(self.experiment.sequence[edge].digital):
             if index % 8 == 0: #adding a 5 ms delay to make changes for more than 8 TTL channels. There is a limit of the buffer size
                 file.write(indentation + "delay(5*ms)\n")
+            
             if channel.value == 0:
                 file.write(indentation + "self.ttl" + str(index) + ".off()\n")
             elif channel.value == 1:
-                file.write(indentation + "self.ttl" + str(index) + ".on()\n")        
+                file.write(indentation + "self.ttl" + str(index) + ".on()\n")
+
         file.write(indentation + "delay(10*ns)\n")
 
     # ANALOG CHANNEL CHANGES
@@ -282,29 +342,71 @@ def create_go_to_edge(self, edge_num, to_default = False):
                 file.write(indentation + "self.fastino0.set_dac(%d, %.6f)\n" %(index, channel.value))         
 
     # DDS CHANNEL CHANGES
+    
+    #### ON-OFF SWITCHING
     if config.dds_channels_number > 0:
         for index, channel in enumerate(self.experiment.sequence[edge].dds):
             urukul_num = int(index // 4)
             channel_num = int(index % 4)
-            file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".set_att(" + str(channel.attenuation.value) + "*dB) \n")    
-            file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".set(frequency = " + str(channel.frequency.value) + "*MHz, amplitude = " + str(channel.amplitude.value) + ", phase = (" + str(channel.phase.value) + ")/360)\n")    
+            
             if channel.state.value == 1:
                 file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".sw.on() \n")
             elif channel.state.value == 0:
                 file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".sw.off() \n")                
 
+    #### ATTENUATION CHANGE
+        for index, channel in enumerate(self.experiment.sequence[edge].dds):
+            urukul_num = int(index // 4)
+            channel_num = int(index % 4)
+                
+            if channel.attenuation.value != 0.0 and channel.state.value == 1:
+                file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".set_att(" + str(channel.attenuation.value) + "*dB) \n")    
+            else:
+                pass
+
+    #### FREQUENCY, AMPLITUDE, PHASE CHANGE
+        for index, channel in enumerate(self.experiment.sequence[edge].dds):
+            urukul_num = int(index // 4)
+            channel_num = int(index % 4)
+            
+            if channel.frequency.value != 0.0 and channel.state.value == 1:
+                file.write(indentation + "self.urukul" + str(urukul_num) + "_ch" + str(channel_num) + ".set(frequency = " + str(channel.frequency.value) + "*MHz, amplitude = " + str(channel.amplitude.value) + ", phase = (" + str(channel.phase.value) + ")/360)\n")
+            else:
+                pass
+
     # MIRNY CHANNEL CHANGES
+
+    #### ON-OFF SWITCHING
+        for index, channel in enumerate(self.experiment.sequence[edge].mirny):
+            mirny_num = int(index // 4)
+            channel_num = int(index % 4)
+            
+            if channel.state.value == 1:
+                file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".sw.on() \n")
+            elif channel.state.value == 0:
+                file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".sw.off() \n")
+    
+    #### ATTENAUTION CHANGE
     if config.mirny_channels_number > 0:
         for index, channel in enumerate(self.experiment.sequence[edge].mirny):
             mirny_num = int(index // 4)
             channel_num = int(index % 4)
-            file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".set_att(" + str(channel.attenuation.value) + "*dB) \n")    
-            file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".set_frequency(%s*MHz)\n"%str(channel.frequency.for_python))    
-            if channel.state.value == 1:
-                file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".sw.on() \n")
-            elif channel.state.value == 0:
-                file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".sw.off() \n")                
             
+            if channel.attenuation.value != 0.0 and channel.state.value == 1:
+                file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".set_att(" + str(channel.attenuation.value) + "*dB) \n")
+            else:
+                pass
+
+    #### FREQUENCY CHANGE
+        for index, channel in enumerate(self.experiment.sequence[edge].mirny):
+            mirny_num = int(index // 4)
+            channel_num = int(index % 4)
+            
+            if channel.frequency.for_python != 0.0 and channel.state.value == 1:
+                file.write(indentation + "self.mirny" + str(mirny_num) + "_ch" + str(channel_num) + ".set_frequency(%s*MHz)\n"%str(channel.frequency.for_python))    
+            else:
+                pass
+        
     file.close()
     
     
