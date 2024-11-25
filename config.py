@@ -9,45 +9,35 @@ camera as we observed that first several images might probabilistically be fault
 For the list_of_devices_for_initialization you can have a look at your device_db.py file to see what options do you have
 '''
 
-digital_channels_number = 16
-analog_channels_number = 16
-dds_channels_number = 12
+digital_channels_number = 8
+analog_channels_number = 0
+dds_channels_number = 4
 mirny_channels_number = 4
-slow_dds_channels_number = 4
-slow_dds_channels = [
-    "urukul3_ch0",
-    "urukul3_ch1",
-    "urukul3_ch2",
-    "urukul3_ch3"
-] # The sequence of the channels should be corresponding to the sequence in the slow DDS tab. The first one in the slow_dds_channels list will be the slow_DDS0 and so on
+slow_dds_channels_number = 0
+slow_dds_channels = [] # The sequence of the channels should be corresponding to the sequence in the slow DDS tab. The first one in the slow_dds_channels list will be the slow_DDS0 and so on
 sampler_channels_number = 8
+
 package_manager = "conda" #it can be either conda or clang64
-artiq_environment_name = "artiq" # it can be either artiq or artiq_5 for Hosten lab systems
-analog_card = "fastino" # it can be either fastino or zotino for Hosten lab systems
-research_group_name = "Hosten"
-allow_skipping_images = True
+artiq_environment_name = "artiq-8" # it can be either artiq or artiq_5 for Hosten lab systems
+
+# analog_card = "fastino" # it can be either fastino or zotino for Hosten lab systems
+research_group_name = "Aspelmeyer"
+allow_skipping_images = False
+
 list_of_devices_for_initialization = [
     "urukul0_cpld",
     "urukul0_ch0",
     "urukul0_ch1",
     "urukul0_ch2",
     "urukul0_ch3",
-    "urukul1_cpld",
-    "urukul1_ch0",
-    "urukul1_ch1",
-    "urukul1_ch2",
-    "urukul1_ch3",
-    "urukul2_cpld",
-    "urukul2_ch0",
-    "urukul2_ch1",
-    "urukul2_ch2",
-    "urukul2_ch3",
+
     "mirny0_cpld",
+    "mirny0_almazny",
     "mirny0_ch0",
     "mirny0_ch1",
     "mirny0_ch2",
     "mirny0_ch3",
-    "fastino0",
+
     "sampler0"
 ]
 
@@ -58,26 +48,14 @@ list_of_devices_for_use = [
     "urukul0_ch1",
     "urukul0_ch2",
     "urukul0_ch3",
-    "urukul1_cpld",
-    "urukul1_ch0",
-    "urukul1_ch1",
-    "urukul1_ch2",
-    "urukul1_ch3",
-    "urukul2_cpld",
-    "urukul2_ch0",
-    "urukul2_ch1",
-    "urukul2_ch2",
-    "urukul2_ch3",
-    "urukul3_cpld",
-    "urukul3_ch0",
-    "urukul3_ch1",
-    "urukul3_ch2",
-    "urukul3_ch3",
+    
     "mirny0_cpld",
+    "mirny0_almazny",
     "mirny0_ch0",
     "mirny0_ch1",
     "mirny0_ch2",
     "mirny0_ch3",
+
     "ttl0",
     "ttl1",
     "ttl2",
@@ -86,14 +64,6 @@ list_of_devices_for_use = [
     "ttl5",
     "ttl6",
     "ttl7",
-    "ttl8",
-    "ttl9",
-    "ttl10",
-    "ttl11",
-    "ttl12",
-    "ttl13",
-    "ttl14",
-    "ttl15",
-    "fastino0",
+    
     "sampler0"
 ]
